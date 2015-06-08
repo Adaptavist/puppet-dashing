@@ -1,6 +1,6 @@
 {
     "name": "rochaporto/dashing",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "summary": "dashing install and configuration",
     "source": "git@github.com/rochaporto/puppet-dashing.git",
     "project_page": "http://github.com/rochaporto/puppet-dashing",

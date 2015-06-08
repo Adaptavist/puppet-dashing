@@ -1,5 +1,5 @@
 name    'rochaporto-dashing'
-version '0.1.2'
+version '0.1.3'
 source 'https://github.com/rochaporto/puppet-dashing'
 author 'ricardo@catalyst.net.nz'
 license 'GPLv3'

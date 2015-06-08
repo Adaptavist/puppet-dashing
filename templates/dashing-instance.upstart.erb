@@ -20,11 +20,11 @@ script
         pidfile="/var/run/dashing/${name}.pid"
         . $CONFIG
         cd $DASHING_DIR
-        source /etc/profile.d/rvm.sh
-        DASHING_EXEC_PATH=`which dashing`
-        start-stop-daemon --pidfile "$pidfile" --start --quiet --chuid $DASHING_RUNUSER --chdir $DASHING_DIR --exec $DASHING_EXEC_PATH start -- -p $DASHING_PORT
+        DASHING_EXEC_PATH=$(bash -c ". /etc/profile.d/rvm.sh; which dashing")
+        bash -c ". /etc/profile.d/rvm.sh; start-stop-daemon --pidfile '${pidfile}' --start --quiet --chuid $DASHING_RUNUSER --chdir $DASHING_DIR --exec $DASHING_EXEC_PATH start -- -p $DASHING_PORT"
     fi
 end script
+
  
 post-stop script
     if [ -f "$CONFIG" ]
