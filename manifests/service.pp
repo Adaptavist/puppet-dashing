@@ -10,11 +10,14 @@
 #
 class dashing::service {
 
-  service { $dashing::service_name:
-    ensure  => running,
-    enable  => true,
-  }
+  # only run the central service if this is a debian system, rhel/cengtos has one per instance
+  if ($::osfamily == 'debian') {
+    service { $dashing::service_name:
+      ensure  => running,
+      enable  => true,
+    }
 
-  Class['dashing::config'] -> Service[$dashing::service_name]
+    Class['dashing::config'] -> Service[$dashing::service_name]
+  }
 
 }

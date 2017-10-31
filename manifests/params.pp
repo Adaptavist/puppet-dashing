@@ -11,7 +11,7 @@
 class dashing::params {
 
   case $::osfamily {
-    debian: {
+    'debian','redhat': {
       $dashing_package_name   = 'dashing'
       $package_status         = 'installed'
       $dashing_conf           = '/etc/dashing.conf'

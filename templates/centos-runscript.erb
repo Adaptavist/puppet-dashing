@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# source profile
+. /etc/profile.d/rvm.sh
+
+# start
+cd <%= @dashing_dir %>; dashing start -- -p <%= @dashing_port %>

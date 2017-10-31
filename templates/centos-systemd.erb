@@ -1,0 +1,14 @@
+[Unit]
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Restart=always
+User=<%= scope.lookupvar('dashing::run_user') %>
+Group=<%= scope.lookupvar('dashing::run_group') %>
+Type=simple
+WorkingDirectory= <%= @dashing_dir %>
+ExecStart=/usr/local/bin/start-dashing-<%= @name %>.sh
+
+[Install]
+WantedBy=multi-user.target
