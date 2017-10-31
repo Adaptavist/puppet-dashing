@@ -14,7 +14,7 @@ class dashing::install {
     ensure => directory,
     owner  => $dashing::run_user,
     group  => $dashing::run_group,
-    mode   => 0644,
+    mode   => '0644',
   }
 
   package {$dashing::dashing_package_name:

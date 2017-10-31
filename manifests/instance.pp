@@ -24,19 +24,6 @@ define dashing::instance (
   $bundle_command_prefix   = 'bash --login -c', #ensures that rvm is loaded so ruby and installed gems are available
 ) {
 
-  file {"/etc/dashing.d/${name}.conf":
-    content => template('dashing/instance.conf.erb'),
-    owner   => $dashing::run_user,
-    group   => $dashing::run_group,
-    mode    => 0644,
-  }
-
-  file {$dashing_dir:
-    ensure => directory,
-    owner   => $dashing::run_user,
-    group   => $dashing::run_group,
-    mode    => 0644,
-  }
 
   if $targz != "false" {
 
@@ -47,8 +34,12 @@ define dashing::instance (
       command => "/usr/bin/wget $targz -O /tmp/$name.tar.gz; /bin/tar -zxvf /tmp/$name.tar.gz -C $dashing_dir $strip_parent_cmd; /bin/rm /tmp/$name.tar.gz",
       unless  => "/bin/ls ${dashing_dir}/dashboards",
     }
-
-    File["/etc/dashing.d/${name}.conf"] -> File[$dashing_dir] -> Exec["dashing-get-$name"] -> Exec["bundle install dashing instance ${name}"]
+    
+    $systemd_require = [Exec["dashing-get-$name"],Exec["bundle install dashing instance ${name}"]]
+   
+    if ($::osfamily == 'debian') {
+      File["/etc/dashing.d/${name}.conf"] -> File[$dashing_dir] -> Exec["dashing-get-$name"] -> Exec["bundle install dashing instance ${name}"]
+    }
   } elsif ($gitrepo != "false") {
     exec {
         "clone dashing instance ${name} from gitrepo":
@@ -57,9 +48,55 @@ define dashing::instance (
             logoutput   => on_failure,
             unless      => "/bin/ls ${dashing_dir}/dashboards",
     }
-    File["/etc/dashing.d/${name}.conf"] -> File[$dashing_dir] -> Exec["clone dashing instance ${name} from gitrepo"] -> Exec["bundle install dashing instance ${name}"]
+
+    $systemd_require = [Exec["clone dashing instance ${name} from gitrepo"],Exec["bundle install dashing instance ${name}"]]
+
+    if ($::osfamily == 'debian') {
+      File["/etc/dashing.d/${name}.conf"] -> File[$dashing_dir] -> Exec["clone dashing instance ${name} from gitrepo"] -> Exec["bundle install dashing instance ${name}"]
+    }
   } else {
     fail("You have to provide targz or gitrepo")
+  }
+
+  # if this is a rhel/centos system deploy the scripts, and start the instance specific service
+  if ($::osfamily == 'redhat') {
+    file { "/usr/local/bin/start-dashing-${name}.sh":
+      content => template('dashing/centos-runscript.erb'),
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0755',
+    } -> file { "/etc/systemd/system/dashing-${name}.service":
+      content => template('dashing/centos-systemd.erb'),
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0755',
+    } -> exec { "register_service_${name}":
+      command => "/usr/bin/systemctl daemon-reload"
+    } -> service { "dashing-${name}":
+      ensure => 'running',
+      enable => true,
+      require => $systemd_require
+    }
+
+    $service_notify = Service["dashing-${name}"]
+  } 
+  # if this is a debian system deploy instance config
+  elsif ($::osfamily == 'debian')  {
+    file {"/etc/dashing.d/${name}.conf":
+      content => template('dashing/instance.conf.erb'),
+      owner   => $dashing::run_user,
+      group   => $dashing::run_group,
+      mode    => '0644',
+    }
+
+    file {$dashing_dir:
+      ensure => directory,
+      owner   => $dashing::run_user,
+      group   => $dashing::run_group,
+      mode    => '0644',
+    }
+
+    $service_notify = Service["$dashing::service_name"]
   }
 
   # do bundle install
@@ -69,6 +106,6 @@ define dashing::instance (
           logoutput   => on_failure,
           cwd         => "${dashing_dir}",
           onlyif      => "/bin/ls ${dashing_dir}/dashboards",
-          notify      => Service["$dashing::service_name"],
+          notify      => $service_notify,
   }
 }
