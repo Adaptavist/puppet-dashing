@@ -10,5 +10,9 @@ Type=simple
 WorkingDirectory= <%= @dashing_dir %>
 ExecStart=/usr/local/bin/start-dashing-<%= @name %>.sh
 
+# supress syslog output
+StandardOutput=null
+StandardError=null
+
 [Install]
 WantedBy=multi-user.target
